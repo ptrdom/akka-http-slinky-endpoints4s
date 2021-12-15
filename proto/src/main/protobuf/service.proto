@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.example;
+
+message Request {
+    string payload = 1;
+}
+
+message Response {
+    string payload = 1;
+}
+
+// Service definition.
+service Service {
+
+  // Unary request.
+  rpc Unary (Request) returns (Response) {}
+
+  // Server streaming request.
+  rpc ServerStreaming(Request) returns (stream Response) {}
+
+  // Bidi streaming request. gRPC-web does not implement it.
+  rpc BidiStreaming(stream Request) returns (stream Response) {}
+
+  // Client streaming request. gRPC-web does not implement it.
+  rpc ClientStreaming(stream Request) returns (Response) {}
+}
