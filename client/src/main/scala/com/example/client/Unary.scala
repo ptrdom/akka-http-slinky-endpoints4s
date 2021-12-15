@@ -1,14 +1,13 @@
 package com.example.client
 
-import com.example.client.App.serviceStub
-import com.example.service.Request
-import scalapb.grpcweb.Metadata
+import com.example.api.ApiRequest
+import com.example.client.App.ApiClient
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.core.facade.Hooks._
 import slinky.web.html._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
 import scala.util.Failure
 import scala.util.Success
 
@@ -20,16 +19,23 @@ import scala.util.Success
 
     useEffect(
       () => {
-        val req                = Request(payload = "Hello!")
-        val metadata: Metadata = Metadata("custom-header-1" -> "unary-value")
+        val req = ApiRequest(payload = "Hello!")
+        //TODO add headers to endpoint
+        //val metadata: Metadata = Metadata("custom-header-1" -> "unary-value")
 
-        serviceStub.unary(req, metadata).onComplete {
-          case Success(value) =>
-            setStatus(s"Request success: ${value.payload}")
-          case Failure(ex) =>
-            setStatus(s"Request failure: $ex")
-        }
+        //TODO add missing cancellation handle https://github.com/endpoints4s/endpoints4s/issues/977
+        ApiClient
+          .unary(req)
+          .onComplete {
+            case Success(value) =>
+              setStatus(s"Request success: ${value.payload}")
+            case Failure(ex) =>
+              setStatus(s"Request failure: $ex")
+          }
         setStatus("Request sent")
+        () => {
+          //TODO use missing cancellation handle
+        }
       },
       Seq.empty
     )

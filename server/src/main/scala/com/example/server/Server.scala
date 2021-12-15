@@ -2,20 +2,15 @@ package com.example.server
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import akka.grpc.scaladsl.WebHandler
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RouteResult
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.example.BuildInfo
-import com.example.ServiceHandler
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
@@ -26,26 +21,19 @@ object Server extends Directives {
   def startHttpServer()(implicit actorSystem: ActorSystem[_]): Unit = {
     import actorSystem.executionContext
 
-    val service: PartialFunction[HttpRequest, Future[HttpResponse]] = {
-      ServiceHandler.partial(new ServiceImpl())
-    }
-
-    val indexAndAssets = new WebService().route
-
-    implicit val corsSettings: CorsSettings = if (BuildInfo.environmentMode.equalsIgnoreCase("development")) {
-      CorsSettings.defaultSettings
-    } else {
-      WebHandler.defaultCorsSettings
-    }
-    val grpcWebServiceHandlers = WebHandler.grpcWebHandler(service)
-
-    val handlerRoute: Route = { ctx =>
-      grpcWebServiceHandlers(ctx.request).map(RouteResult.Complete)
-    }
-
     val route = concat(
-      indexAndAssets,
-      handlerRoute
+      new WebService().route, {
+        val routes = new ApiServer().routes
+        if (BuildInfo.environmentMode.equalsIgnoreCase("development")) {
+          cors(
+            CorsSettings.defaultSettings
+          ) {
+            routes
+          }
+        } else {
+          routes
+        }
+      }
     )
 
     val binding = Http()
@@ -57,9 +45,9 @@ object Server extends Directives {
 
     binding.onComplete {
       case Success(binding) =>
-        logger.info(s"gRPC server bound to: ${binding.localAddress}")
+        logger.info(s"HTTP server bound to: ${binding.localAddress}")
       case Failure(ex) =>
-        logger.error(s"gRPC server binding failed", ex)
+        logger.error(s"HTTP server binding failed", ex)
         actorSystem.terminate()
     }
   }
@@ -72,6 +60,6 @@ object Server extends Directives {
     val conf = ConfigFactory
       .parseString("akka.http.server.preview.enable-http2 = on")
       .withFallback(ConfigFactory.defaultApplication())
-    ActorSystem[Nothing](rootBehavior, "akka-grpc-slinky-grpcweb", conf)
+    ActorSystem[Nothing](rootBehavior, "akka-http-slinky-endpoints4s", conf)
   }
 }

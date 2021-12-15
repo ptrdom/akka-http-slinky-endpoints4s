@@ -21,7 +21,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "akka-grpc-slinky-grpcweb"
+      title: "akka-http-slinky-endpoints4s"
     })
   ],
   output: {
