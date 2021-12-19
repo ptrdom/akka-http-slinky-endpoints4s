@@ -2,19 +2,21 @@ package com.example.client
 
 import com.example.api.ApiRequest
 import com.example.client.App.ApiClient
+import com.example.client.App.globalExecutionContext
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.core.facade.Hooks._
 import slinky.web.html._
 
-import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
+import scala.scalajs.js.timers.clearTimeout
+import scala.scalajs.js.timers.setTimeout
 import scala.util.Failure
 import scala.util.Success
 
 @react object Unary {
-  type Props = Unit
+  case class Props(abort: Boolean)
 
-  val component: FunctionalComponent[Props] = FunctionalComponent { _ =>
+  val component: FunctionalComponent[Props] = FunctionalComponent { props =>
     val (status, setStatus) = useState("Request pending")
 
     useEffect(
@@ -23,25 +25,36 @@ import scala.util.Success
         //TODO add headers to endpoint
         //val metadata: Metadata = Metadata("custom-header-1" -> "unary-value")
 
-        //TODO add missing cancellation handle https://github.com/endpoints4s/endpoints4s/issues/977
-        ApiClient
-          .unary(req)
+        val result = ApiClient.unary(req)
+        setStatus("Request sent")
+
+        result.future
           .onComplete {
             case Success(value) =>
               setStatus(s"Request success: ${value.payload}")
             case Failure(ex) =>
               setStatus(s"Request failure: $ex")
           }
-        setStatus("Request sent")
+
+        val maybeTimer = if (props.abort) {
+          Some(
+            setTimeout(1000) {
+              setStatus(s"Request aborted by client")
+              result.abort()
+            }
+          )
+        } else None
+
         () => {
-          //TODO use missing cancellation handle
+          result.abort()
+          maybeTimer.foreach(clearTimeout)
         }
       },
       Seq.empty
     )
 
     div(
-      h2("Unary request:"),
+      h2(s"Unary request${if (props.abort) " (with abort)" else ""}:"),
       p(status)
     )
   }

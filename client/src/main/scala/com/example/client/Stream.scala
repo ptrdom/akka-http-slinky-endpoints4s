@@ -1,23 +1,19 @@
 package com.example.client
 
 import com.example.api.ApiRequest
-import com.example.api.ApiResponse
 import com.example.client.App.ApiClient
-import org.scalajs.dom.ReadableStreamReader
+import com.example.client.utility.Handlers._
 import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.core.facade.Hooks._
 import slinky.web.html._
 
-import scala.concurrent.Future
-import scala.scalajs.js.Thenable.Implicits._
 import scala.scalajs.js.timers.clearTimeout
 import scala.scalajs.js.timers.setTimeout
-import scala.util.control.NonFatal
 
 @react object Stream {
-  case class Props(cancel: Boolean)
+  case class Props(abort: Boolean)
 
   val component: FunctionalComponent[Props] = FunctionalComponent { props =>
     val (status, setStatus) = useState("Request pending")
@@ -30,47 +26,32 @@ import scala.util.control.NonFatal
 
         var resCount = 0
 
-        //TODO add missing cancellation handle https://github.com/endpoints4s/endpoints4s/issues/977
-        ApiClient
-          .serverStreaming(req)
-          .flatMap { stream =>
-            def read(
-                reader: ReadableStreamReader[ApiResponse]
-            ): Future[Unit] = {
-              reader
-                .read()
-                .flatMap { chunk =>
-                  if (chunk.done) {
-                    setStatus(s"Received completed")
-                    Future.unit
-
-                  } else {
-                    resCount += 1
-                    setStatus(
-                      s"Received element [${chunk.value}] success [$resCount]"
-                    )
-                    read(reader)
-                  }
-                }
-                .recoverWith { case NonFatal(ex) =>
-                  setStatus(s"Received failure: $ex")
-                  Future.unit
-                }
-            }
-            read(stream.getReader())
-          }
+        val result = ApiClient.serverStreaming(req)
         setStatus("Request sent")
 
-        val maybeTimer = if (props.cancel) {
+        result.future
+          .handle(
+            element => {
+              resCount += 1
+              setStatus(
+                s"Received element [$element] success [$resCount]"
+              )
+            },
+            () => setStatus(s"Received completed"),
+            ex => setStatus(s"Received failure: $ex")
+          )
+
+        val maybeTimer = if (props.abort) {
           Some(
             setTimeout(5000) {
-              setStatus(s"Stream stopped by client")
-              //TODO use missing cancellation handle
+              setStatus(s"Request aborted by client")
+              result.abort()
             }
           )
         } else None
+
         () => {
-          //TODO use missing cancellation handle
+          result.abort()
           maybeTimer.foreach(clearTimeout)
         }
       },
@@ -78,7 +59,7 @@ import scala.util.control.NonFatal
     )
 
     div(
-      h2("Stream request:"),
+      h2(s"Stream request${if (props.abort) " (with abort)" else ""}:"),
       p(status)
     )
   }

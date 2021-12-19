@@ -3,7 +3,9 @@ package com.example.client
 import com.example.api.Api
 import com.example.client.utility.ChunkedEntities
 import com.example.client.utility.ChunkedJsonEntities
+import com.example.client.utility.Endpoints
 import endpoints4s.fetch
+import org.scalajs.macrotaskexecutor.MacrotaskExecutor
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.core.facade.Fragment
@@ -18,24 +20,26 @@ import scala.scalajs.LinkingInfo
   def render() = {
     Fragment(
       h1("Hello world!"),
-      Unary(),
-      Stream(cancel = false),
-      Stream(cancel = true)
+      Unary(abort = false),
+      Unary(abort = true),
+      Stream(abort = false),
+      Stream(abort = true)
     )
   }
 }
 
 object App {
 
+  implicit def globalExecutionContext: ExecutionContext = MacrotaskExecutor
+
   object ApiClient
       extends Api
-      with fetch.future.Endpoints
+      with Endpoints
       with fetch.JsonEntitiesFromSchemas
       with ChunkedEntities
       with ChunkedJsonEntities {
 
-    implicit def ec: ExecutionContext =
-      org.scalajs.macrotaskexecutor.MacrotaskExecutor
+    implicit def ec: ExecutionContext = globalExecutionContext
 
     lazy val settings: fetch.EndpointsSettings = fetch
       .EndpointsSettings()
