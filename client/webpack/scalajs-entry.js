@@ -1,13 +1,13 @@
 if (process.env.NODE_ENV === "production") {
-    const opt = require("./client-opt.js");
+    const opt = require("./clientprod-opt.js");
     opt.main();
     module.exports = opt;
 } else {
     var exports = window;
-    exports.require = require("./client-fastopt-entrypoint.js").require;
+    exports.require = require("./clientdev-fastopt-entrypoint.js").require;
     window.global = window;
 
-    const fastOpt = require("./client-fastopt.js");
+    const fastOpt = require("./clientdev-fastopt.js");
     fastOpt.main()
     module.exports = fastOpt;
 

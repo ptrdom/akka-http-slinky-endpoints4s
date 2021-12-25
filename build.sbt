@@ -1,5 +1,3 @@
-import BuildEnvPlugin.autoImport
-import BuildEnvPlugin.autoImport.BuildEnv
 import com.typesafe.sbt.packager.docker.DockerAlias
 import com.typesafe.sbt.packager.docker.ExecCmd
 
@@ -17,15 +15,18 @@ lazy val logbackVersion = "1.2.3"
 lazy val scalaTestPlusPlayVersion = "5.0.0"
 lazy val scalaJsDomVersion = "1.1.0"
 lazy val scalaJsScriptsVersion = "1.1.4"
-lazy val slinkyVersion =
-  "0.6.8+8-0b6a9cab" //TODO update to 0.7.0 once released (for scalajs-dom 2.0.0)
+lazy val slinkyVersion = "0.7.0"
 lazy val reactVersion = "16.12.0"
 lazy val reactProxyVersion = "1.1.8"
 
 lazy val `akka-http-slinky-endpoints4s` = (project in file("."))
   .aggregate(
-    client,
-    server
+    clientBase,
+    clientDev,
+    clientProd,
+    serverBase,
+    serverDev,
+    serverProd
   )
 
 lazy val api =
@@ -40,76 +41,63 @@ lazy val api =
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
 
-lazy val client =
-  project
-    .in(file("client"))
-    .enablePlugins(ScalaJSBundlerPlugin)
-    .settings(
-      libraryDependencies += "me.shadaj" %%% "slinky-web" % slinkyVersion,
-      libraryDependencies += "me.shadaj" %%% "slinky-hot" % slinkyVersion,
-      libraryDependencies += "org.endpoints4s" %%% "fetch-client" % "1.0.0",
-      libraryDependencies += "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
-      scalacOptions += "-Ymacro-annotations",
-      npmDependencies in Compile += "react" -> reactVersion,
-      npmDependencies in Compile += "react-dom" -> reactVersion,
-      npmDependencies in Compile += "react-proxy" -> reactProxyVersion,
-      npmDevDependencies in Compile += "file-loader" -> "6.2.0",
-      npmDevDependencies in Compile += "style-loader" -> "2.0.0",
-      npmDevDependencies in Compile += "css-loader" -> "5.0.1",
-      npmDevDependencies in Compile += "html-webpack-plugin" -> "4.3.0",
-      npmDevDependencies in Compile += "webpack-merge" -> "5.7.3",
-      scalaJSStage := {
-        autoImport.buildEnv.value match {
-          case BuildEnv.Development =>
-            FastOptStage
-          case _ =>
-            FullOptStage
-        }
-      },
-      webpackResources := baseDirectory.value / "webpack" * "*",
-      webpackConfigFile in fastOptJS := Some(
-        baseDirectory.value / "webpack" / "webpack-fastopt.config.js"
-      ),
-      webpackConfigFile in fullOptJS := Some(
-        baseDirectory.value / "webpack" / "webpack-opt.config.js"
-      ),
-      webpackConfigFile in Test := Some(
-        baseDirectory.value / "webpack" / "webpack-core.config.js"
-      ),
-      webpackDevServerExtraArgs in fastOptJS := Seq("--inline", "--hot"),
-      webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
-      requireJsDomEnv in Test := true
-    )
-    .dependsOn(apiJS)
-
-lazy val server = project
-  .enablePlugins(
-    WebScalaJSBundlerPlugin,
-    JavaAppPackaging,
-    DockerPlugin,
-    BuildInfoPlugin
-  )
-  .in(file("server"))
+lazy val clientBase = project
+  .in(file("client/base"))
+  .enablePlugins(ScalaJSPlugin)
   .settings(
-    scalaJSProjects := {
-      autoImport.buildEnv.value match {
-        case BuildEnv.Production =>
-          Seq(client)
-        case _ =>
-          Seq.empty
-      }
-    },
-    pipelineStages in Assets := {
-      autoImport.buildEnv.value match {
-        case BuildEnv.Production =>
-          Seq(scalaJSPipeline)
-        case _ =>
-          Seq.empty
-      }
-    },
-    compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
-    WebKeys.packagePrefix in Assets := "public/",
-    managedClasspath in Runtime += (packageBin in Assets).value,
+    libraryDependencies += "me.shadaj" %%% "slinky-web" % slinkyVersion,
+    libraryDependencies += "me.shadaj" %%% "slinky-hot" % slinkyVersion,
+    libraryDependencies += "org.endpoints4s" %%% "fetch-client" % "1.0.0",
+    libraryDependencies += "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
+    scalacOptions += "-Ymacro-annotations"
+  )
+  .dependsOn(apiJS)
+
+lazy val clientCommonSettings = Seq(
+  npmDependencies in Compile += "react" -> reactVersion,
+  npmDependencies in Compile += "react-dom" -> reactVersion,
+  npmDependencies in Compile += "react-proxy" -> reactProxyVersion,
+  npmDevDependencies in Compile += "file-loader" -> "6.2.0",
+  npmDevDependencies in Compile += "style-loader" -> "2.0.0",
+  npmDevDependencies in Compile += "css-loader" -> "5.0.1",
+  npmDevDependencies in Compile += "html-webpack-plugin" -> "4.3.0",
+  npmDevDependencies in Compile += "webpack-merge" -> "5.7.3",
+  webpackResources := (baseDirectory in ThisBuild).value / "client" / "webpack" * "*",
+  webpackConfigFile in Test := Some(
+    (baseDirectory in ThisBuild).value / "client" / "webpack" / "webpack-core.config.js"
+  ),
+  requireJsDomEnv in Test := true
+)
+
+lazy val clientDev = project
+  .in(file("client/dev"))
+  .enablePlugins(ScalaJSBundlerPlugin)
+  .settings(
+    clientCommonSettings,
+    scalaJSStage := FastOptStage,
+    webpackConfigFile in fastOptJS := Some(
+      (baseDirectory in ThisBuild).value / "client" / "webpack" / "webpack-fastopt.config.js"
+    ),
+    webpackDevServerExtraArgs in fastOptJS := Seq("--inline", "--hot"),
+    webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+  )
+  .dependsOn(clientBase)
+
+lazy val clientProd = project
+  .in(file("client/prod"))
+  .enablePlugins(ScalaJSBundlerPlugin)
+  .settings(
+    clientCommonSettings,
+    scalaJSStage := FullOptStage,
+    webpackConfigFile in fullOptJS := Some(
+      (baseDirectory in ThisBuild).value / "client" / "webpack" / "webpack-opt.config.js"
+    )
+  )
+  .dependsOn(clientBase)
+
+lazy val serverBase = project
+  .in(file("server/base"))
+  .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -123,12 +111,35 @@ lazy val server = project
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "org.scalatest" %% "scalatest" % "3.1.1" % Test
-    ),
-    Compile / mainClass := Some("com.example.server.Server"),
-    buildInfoKeys ++= Seq[BuildInfoKey](
-      "environmentMode" -> autoImport.buildEnv.value
-    ),
-    buildInfoPackage := "com.example"
+    )
+  )
+  .dependsOn(apiJVM)
+
+lazy val serverCommonSettings = Seq(
+  Compile / mainClass := Some("com.example.server.Server")
+)
+
+lazy val serverDev = project
+  .in(file("server/dev"))
+  .settings(
+    serverCommonSettings
+  )
+  .dependsOn(serverBase)
+
+lazy val serverProd = project
+  .in(file("server/prod"))
+  .enablePlugins(
+    WebScalaJSBundlerPlugin,
+    JavaAppPackaging,
+    DockerPlugin
+  )
+  .settings(
+    serverCommonSettings,
+    scalaJSProjects := Seq(clientProd),
+    pipelineStages := Seq(scalaJSPipeline),
+    compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
+    WebKeys.packagePrefix in Assets := "public/",
+    managedClasspath in Runtime += (packageBin in Assets).value
   )
   .settings(
     dockerAliases in Docker += DockerAlias(
@@ -148,10 +159,10 @@ lazy val server = project
     },
     dockerExposedPorts ++= Seq(9000)
   )
-  .dependsOn(apiJVM)
+  .dependsOn(serverBase)
 
-addCommandAlias("serverDev", "~server/reStart")
+addCommandAlias("startServerDev", "~serverDev/reStart")
 addCommandAlias(
-  "clientDev",
-  "client/fastOptJS::startWebpackDevServer;~client/fastOptJS"
+  "startClientDev",
+  "clientDev/fastOptJS::startWebpackDevServer;~clientDev/fastOptJS"
 )

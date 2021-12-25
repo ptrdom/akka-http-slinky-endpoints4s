@@ -5,16 +5,16 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
-import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
-import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
-import com.example.BuildInfo
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
 
 import scala.util.Failure
 import scala.util.Success
 
-object Server extends Directives {
+trait ServerBase extends Directives {
+
+  val corsApiRouteFilter: Route => Route
+  val webServiceRoute: Route
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -22,18 +22,8 @@ object Server extends Directives {
     import actorSystem.executionContext
 
     val route = concat(
-      new WebService().route, {
-        val routes = new ApiServer().routes
-        if (BuildInfo.environmentMode.equalsIgnoreCase("development")) {
-          cors(
-            CorsSettings.defaultSettings
-          ) {
-            routes
-          }
-        } else {
-          routes
-        }
-      }
+      webServiceRoute,
+      corsApiRouteFilter(new ApiServer().routes)
     )
 
     val binding = Http()

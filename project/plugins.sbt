@@ -13,8 +13,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.7.6")
 
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
-
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 
 addDependencyTreePlugin
