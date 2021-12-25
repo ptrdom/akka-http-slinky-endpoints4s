@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 class ApiServer()(implicit as: ActorSystem[_])
     extends Api
     with server.Endpoints
-    with server.JsonEntitiesFromSchemas
+    with server.JsonEntitiesFromCodecs
     with ChunkedJsonEntities {
 
   val unaryRoute = unary.implementedByAsync(in =>

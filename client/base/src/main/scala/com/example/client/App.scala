@@ -35,7 +35,7 @@ object App {
   object ApiClient
       extends Api
       with Endpoints
-      with fetch.JsonEntitiesFromSchemas
+      with fetch.JsonEntitiesFromCodecs
       with ChunkedEntities
       with ChunkedJsonEntities {
 

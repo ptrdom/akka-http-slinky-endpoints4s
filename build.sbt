@@ -18,6 +18,7 @@ lazy val scalaJsScriptsVersion = "1.1.4"
 lazy val slinkyVersion = "0.7.0"
 lazy val reactVersion = "16.12.0"
 lazy val reactProxyVersion = "1.1.8"
+lazy val circeVersion = "0.14.1"
 
 lazy val `akka-http-slinky-endpoints4s` = (project in file("."))
   .aggregate(
@@ -34,8 +35,9 @@ lazy val api =
     .crossType(CrossType.Pure)
     .in(file("api"))
     .settings(
-      libraryDependencies += "org.endpoints4s" %%% "algebra" % "1.6.0",
-      libraryDependencies += "org.endpoints4s" %%% "json-schema-generic" % "1.6.0"
+      libraryDependencies += "org.endpoints4s" %%% "algebra" % endpoints4sVersion,
+      libraryDependencies += "org.endpoints4s" %%% "algebra-circe" % "2.0.0",
+      libraryDependencies += "io.circe" %%% "circe-generic" % circeVersion
     )
 
 lazy val apiJS = api.js
