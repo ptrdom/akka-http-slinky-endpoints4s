@@ -52,7 +52,8 @@ Docker image publishing is implemented with [sbt-native-packager](https://github
 https://slinky.dev/docs/installation/ section `IntelliJ Support` describes how to add support for `@react` macro.
 
 ## Built on:
-- [endpoints4s](https://github.com/endpoints4s/endpoints4s) 
+- [endpoints4s](https://github.com/endpoints4s/endpoints4s)
+- [akka-http](https://github.com/akka/akka-http)
 - [sbt-web](https://github.com/sbt/sbt-web)
 - [sbt-web-scalajs](https://github.com/vmunier/sbt-web-scalajs)
 - [scalajs-bundler](https://github.com/scalacenter/scalajs-bundler)
