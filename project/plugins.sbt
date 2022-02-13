@@ -7,10 +7,6 @@ addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.20.0")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
-
-addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
-
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.7.6")
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
