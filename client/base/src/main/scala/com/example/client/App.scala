@@ -1,9 +1,6 @@
 package com.example.client
 
 import com.example.api.Api
-import com.example.client.utility.ChunkedEntities
-import com.example.client.utility.ChunkedJsonEntities
-import com.example.client.utility.Endpoints
 import endpoints4s.fetch
 import org.scalajs.macrotaskexecutor.MacrotaskExecutor
 import slinky.core._
@@ -34,10 +31,9 @@ object App {
 
   object ApiClient
       extends Api
-      with Endpoints
+      with fetch.future.Endpoints
       with fetch.JsonEntitiesFromCodecs
-      with ChunkedEntities
-      with ChunkedJsonEntities {
+      with fetch.ChunkedJsonResponseEntities {
 
     implicit def ec: ExecutionContext = globalExecutionContext
 

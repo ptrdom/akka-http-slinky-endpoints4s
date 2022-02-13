@@ -10,7 +10,10 @@ resolvers in ThisBuild ++= Seq(
 
 lazy val akkaVersion = "2.6.10"
 lazy val akkaHttpVersion = "10.2.6"
-lazy val endpoints4sVersion = "1.6.0"
+lazy val endpoints4sVersion = "1.7.0"
+lazy val endpoints4sCirceVersion = "2.0.0"
+lazy val endpoints4sFetchClientVersion = "2.0.0"
+lazy val endpoints4sAkkaHttpServerVersion = "6.0.0"
 lazy val logbackVersion = "1.2.3"
 lazy val scalaTestPlusPlayVersion = "5.0.0"
 lazy val scalaJsDomVersion = "1.1.0"
@@ -36,7 +39,7 @@ lazy val api =
     .in(file("api"))
     .settings(
       libraryDependencies += "org.endpoints4s" %%% "algebra" % endpoints4sVersion,
-      libraryDependencies += "org.endpoints4s" %%% "algebra-circe" % "2.0.0",
+      libraryDependencies += "org.endpoints4s" %%% "algebra-circe" % endpoints4sCirceVersion,
       libraryDependencies += "io.circe" %%% "circe-generic" % circeVersion
     )
 
@@ -49,7 +52,7 @@ lazy val clientBase = project
   .settings(
     libraryDependencies += "me.shadaj" %%% "slinky-web" % slinkyVersion,
     libraryDependencies += "me.shadaj" %%% "slinky-hot" % slinkyVersion,
-    libraryDependencies += "org.endpoints4s" %%% "fetch-client" % "1.0.0",
+    libraryDependencies += "org.endpoints4s" %%% "fetch-client" % endpoints4sFetchClientVersion,
     libraryDependencies += "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
     scalacOptions += "-Ymacro-annotations"
   )
@@ -107,7 +110,7 @@ lazy val serverBase = project
       "com.typesafe.akka" %% "akka-pki" % akkaVersion,
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http2-support" % akkaHttpVersion,
-      "org.endpoints4s" %% "akka-http-server" % "6.0.0",
+      "org.endpoints4s" %% "akka-http-server" % endpoints4sAkkaHttpServerVersion,
       "ch.megard" %% "akka-http-cors" % "1.1.2",
       "ch.qos.logback" % "logback-classic" % logbackVersion,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,

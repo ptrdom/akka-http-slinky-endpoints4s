@@ -8,7 +8,6 @@ import akka.stream.scaladsl.Source
 import endpoints4s.akkahttp.server
 import com.example.api.Api
 import com.example.api.ApiResponse
-import com.example.server.utility.ChunkedJsonEntities
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -17,7 +16,7 @@ class ApiServer()(implicit as: ActorSystem[_])
     extends Api
     with server.Endpoints
     with server.JsonEntitiesFromCodecs
-    with ChunkedJsonEntities {
+    with server.ChunkedJsonEntities {
 
   val unaryRoute = unary.implementedByAsync(in =>
     after(2.seconds) {
