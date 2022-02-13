@@ -31,8 +31,11 @@ It serves HTTP endpoints for front-end to consume on `localhost:9000`.
 `startClientDev` starts `webpack dev server` with `HMR` enabled for front-end development with
 `Scala.js` and `Slinky`. Opening `localhost:8080` in the browser will serve `index.html`.
 
-IntelliJ's `sbt shell` must be enabled to make sbt plugins run during compile -
-integrated Scala compile server won't trigger them.
+Source must be either: 
+- Imported as `sbt` project and have IntelliJ's `sbt shell` enabled.
+- Imported as [BSP](https://build-server-protocol.github.io/) project.
+
+This is required to make sbt plugins run during compile - integrated Scala compile server won't trigger them.
 
 ### Production mode
 
