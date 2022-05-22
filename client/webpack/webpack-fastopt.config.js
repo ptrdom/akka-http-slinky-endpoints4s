@@ -6,7 +6,7 @@ const entries = {};
 entries[Object.keys(generatedConfig.entry)[0]] = "scalajs";
 
 module.exports = merge(core, {
-  devtool: "cheap-module-eval-source-map",
+  devtool: "eval-cheap-module-source-map",
   entry: entries,
   module: {
     noParse: (content) => {

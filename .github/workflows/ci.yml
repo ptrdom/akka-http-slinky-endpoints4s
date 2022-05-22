@@ -8,14 +8,21 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
+  check:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: coursier/cache-action@v5
-      - uses: actions/setup-node@v2
-      - uses: olafurpg/setup-scala@v10
+      - uses: coursier/cache-action@v6
+      - uses: coursier/setup-action@v1
         with:
-          java-version: adopt@1.11
-      - run: sbt compile serverProd/docker:publishLocal
+          jvm: adopt:11
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.14.2
+      - run: sbt "scalafmtSbtCheck; scalafmtCheckAll; test:compile; clientDev/fastOptJS::webpack; clientProd/fullOptJS::webpack"
+      # Only Linux container setup is provided and GitHub Actions do not support Linux containers on Windows
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sbt serverProd/docker:publishLocal
