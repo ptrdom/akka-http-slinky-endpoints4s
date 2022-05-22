@@ -40,5 +40,7 @@ module.exports = {
       "Access-Control-Allow-Origin": "*"
     },
     historyApiFallback: true
-  }
+  },
+  // Temporary until https://github.com/scalacenter/scalajs-bundler/pull/424 is resolved
+  performance: { hints: false }
 }
